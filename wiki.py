@@ -1,4 +1,8 @@
-"""A simple Wiki API using JSON; see ./wiki_tests.py for test cases"""
+"""A simple Wiki API using JSON; see ./wiki_tests.py for test cases.
+
+Uses flask (http://flask.pocoo.org/)
+"""
+
 from json import dumps, loads
 from os.path import join, isfile, isdir
 from os import listdir, makedirs
@@ -19,10 +23,9 @@ def get_version_directories(title):
        title (str): page title, assumed to be verified
 
     Returns:
-       List[str]: list of timestamps in string form, sorted in 
+       List[str]: list of timestamps in string form, sorted in
                   floating point numeric order
     """
-    
     page_directory = join(APP.config['ROOT'], title)
     unsorted = [x for x in listdir(page_directory) if
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
@@ -39,7 +42,7 @@ def verify_page_title(title):
         abort(400)
 
 def verify_root():
-    """Check that the site has been properly configured, and if not call flask's 
+    """Check that the site has been properly configured, and if not call flask's
     abort, raising an exception."""
     if 'ROOT' not in APP.config:
         abort(500)
@@ -53,7 +56,11 @@ def documents():
     """Return a list of available titles.
 
     Returns:
-      str: JSON encoded list of titles
+      str: JSON encoded list of titles, each of which is of the form {"title": "pagename"}
+
+    Sample output with one page called test:
+
+      [{"title": "test"}]
     """
     verify_root()
     return dumps(sorted([{"title":title} for title in listdir(APP.config['ROOT']) if
@@ -61,6 +68,14 @@ def documents():
 
 @APP.route("/documents/<title>", methods=['POST'])
 def post_page(title):
+    """Post a new page.
+
+    Args:
+      title(str): name of the page
+
+    Returns:
+      str: status indicated message, e.g. "saved"
+    """
     verify_root()
     verify_page_title(title)
     try:
@@ -73,9 +88,9 @@ def post_page(title):
     if not isdir(page_directory):
         makedirs(page_directory)
     page_filetitle = join(page_directory, str(time()))
-    with open(page_filetitle, 'w') as f:
-        f.write(doc['content'])
-        return 'saved'
+    with open(page_filetitle, 'w') as fileobj:
+        fileobj.write(doc['content'])
+        return "saved"
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
 def get_specific_page(title, timestamp):
@@ -90,8 +105,8 @@ def get_specific_page(title, timestamp):
         if timestamp not in versions:
             abort(404)
         version = timestamp
-    with open(join(APP.config['ROOT'], title, version), 'r') as f:
-        return dumps({'content':f.read()})
+    with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
+        return dumps({'content':fileobj.read()})
 
 @APP.route("/documents/<title>", methods=['GET'])
 def get_page_versions(title):
