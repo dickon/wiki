@@ -1,26 +1,46 @@
+"""A simple Wiki API using JSON; see ./wiki_tests.py for test cases"""
 from json import dumps, loads
 from os.path import join, isfile, isdir
 from os import listdir, makedirs
-from re import compile
+from re import compile as regexp_compile
 from time import time
 from flask import Flask, request, abort
 
 APP = Flask(__name__)
-DOCUMENT_NAME_REGEXP = compile("[A-Za-z0-9]{1,50}$")
-TIMESTAMP_REGEXP = compile(r"\d+(\.\d+)?$")
+DOCUMENT_TITLE_REGEXP = regexp_compile("[A-Za-z0-9]{1,50}$")
+TIMESTAMP_REGEXP = regexp_compile(r"\d+(\.\d+)?$")
 
 # library functions
 
-def get_version_directories(name):
-    page_directory = join(APP.config['ROOT'], name)
-    unsorted = [x for x in listdir(page_directory) if TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
+def get_version_directories(title):
+    """Return a list of version strings for a page:
+
+    Args:
+       title (str): page title, assumed to be verified
+
+    Returns:
+       List[str]: list of timestamps in string form, sorted in 
+                  floating point numeric order
+    """
+    
+    page_directory = join(APP.config['ROOT'], title)
+    unsorted = [x for x in listdir(page_directory) if
+                TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
 
-def verify_page_name(name):
-    if not DOCUMENT_NAME_REGEXP.match(name):
-        abort(400) # if we wanted to require python 3.4 we could use http.HTTPStatus
+def verify_page_title(title):
+    """Check that title is valid, or abort (raising an exception)"
+
+    Args:
+      title (str): page title
+    """
+    if not DOCUMENT_TITLE_REGEXP.match(title):
+        # TODO: if we wanted to require python 3.4 we could use http.HTTPStatus
+        abort(400)
 
 def verify_root():
+    """Check that the site has been properly configured, and if not call flask's 
+    abort, raising an exception."""
     if 'ROOT' not in APP.config:
         abort(500)
     if not isdir(APP.config['ROOT']):
@@ -30,32 +50,38 @@ def verify_root():
 
 @APP.route("/documents")
 def documents():
-    verify_root()
-    return dumps(sorted([name for name in listdir(APP.config['ROOT']) if DOCUMENT_NAME_REGEXP.match(name)]))
+    """Return a list of available titles.
 
-@APP.route("/documents/<name>", methods=['POST'])
-def post_page(name):
+    Returns:
+      str: JSON encoded list of titles
+    """
     verify_root()
-    verify_page_name(name)
+    return dumps(sorted([title for title in listdir(APP.config['ROOT']) if
+                         DOCUMENT_TITLE_REGEXP.match(title)]))
+
+@APP.route("/documents/<title>", methods=['POST'])
+def post_page(title):
+    verify_root()
+    verify_page_title(title)
     try:
         doc = loads(request.data.decode())
     except ValueError:
-        abort(400) # TODO: include text telling the user that the JSON is invalid?
-        
+        abort(400) # TODO: specific error text saying JSON is invalid?
+
     # TODO: validate doc structure
-    page_directory = join(APP.config['ROOT'], name)
+    page_directory = join(APP.config['ROOT'], title)
     if not isdir(page_directory):
         makedirs(page_directory)
-    page_filename = join(page_directory, str(time()))
-    with open(page_filename, 'w') as f:
+    page_filetitle = join(page_directory, str(time()))
+    with open(page_filetitle, 'w') as f:
         f.write(doc['content'])
         return 'saved'
-    
-@APP.route("/documents/<name>/<timestamp>", methods=['GET'])
-def get_specific_page(name, timestamp):
+
+@APP.route("/documents/<title>/<timestamp>", methods=['GET'])
+def get_specific_page(title, timestamp):
     verify_root()
-    verify_page_name(name)
-    versions = get_version_directories(name)
+    verify_page_title(title)
+    versions = get_version_directories(title)
     if timestamp == 'latest':
         if versions == []:
             abort(404)
@@ -64,12 +90,12 @@ def get_specific_page(name, timestamp):
         if timestamp not in versions:
             abort(404)
         version = timestamp
-    with open(join(APP.config['ROOT'], name, version), 'r') as f:
+    with open(join(APP.config['ROOT'], title, version), 'r') as f:
         return dumps({'content':f.read()})
 
-@APP.route("/documents/<name>", methods=['GET'])
-def get_page_versions(name):
+@APP.route("/documents/<title>", methods=['GET'])
+def get_page_versions(title):
     verify_root()
-    verify_page_name(name)
-    versions = get_version_directories(name)
+    verify_page_title(title)
+    versions = get_version_directories(title)
     return dumps([{'timestamp_string':x} for x in versions])
