@@ -13,19 +13,19 @@ class WikiTestCase(TestCase):
         
     def tearDown(self):
         rmtree(app.config['ROOT'])
+
+    def get_json(self, path):
+        return loads(self.app.get(path).data.decode())
         
     def test_empty(self):
-        rv = self.app.get('/documents')
-        assert rv.data == b"[]"
-        out = loads(rv.data.decode())
-        assert out == []
+        empty_list = self.get_json('/documents')
+        assert empty_list == []
 
-    def test_single_page(self):
+    def test_single_page(self):        
         rv = self.app.post('/documents/test', data='hello world')
         assert rv.status_code == 200
-        rv2 = self.app.get('/documents/test/latest')
-        out2 = loads(rv2.data.decode())
-        assert out2['content'] == 'hello world'
+        wanted_page = self.get_json('/documents/test/latest')
+        assert wanted_page == {'content': 'hello world'}
     
         
 if __name__ == '__main__':
