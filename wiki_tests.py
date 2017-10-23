@@ -26,7 +26,11 @@ class WikiTestCase(TestCase):
         assert rv.status_code == 200
         wanted_page = self.get_json('/documents/test/latest')
         assert wanted_page == {'content': 'hello world'}
-    
+
+    def test_invalid_title(self):
+        rv = self.app.get('/documents/&#47;&#46;&#46.hack')
+        # TODO: should we be returning 401 Unatuhroized or 403 Forbidden here? least disclosure suggests 400 bad request
+        assert rv.status_code == 400
         
 if __name__ == '__main__':
     main()
