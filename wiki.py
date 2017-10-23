@@ -45,14 +45,20 @@ def post_page(name):
         f.write(request.data)
         return 'saved'
     
-@APP.route("/documents/<name>", methods=['GET'])
-def get_latest_page(name):
+@APP.route("/documents/<name>/<timestamp>", methods=['GET'])
+def get_specific_page(name, timestamp):
     verify_root()
     verify_page_name(name)
     versions = get_version_directories(name)
-    if versions == []:
-        abort(404)
-    with open(join(APP.config['ROOT'], name, versions[-1]), 'r') as f:
+    if timestamp == 'latest':
+        if versions == []:
+            abort(404)
+        version = versions[-1]
+    else:
+        if timestamp not in versions:
+            abort(404)
+        version = timestamp
+    with open(join(APP.config['ROOT'], name, version), 'r') as f:
         return dumps({'content':f.read()})
 
 @APP.route("/documents/<name>", methods=['GET'])
