@@ -32,6 +32,11 @@ class WikiTestCase(TestCase):
         doc_versions = self.get_json('/documents/test')
         assert len(doc_versions) == 1
         assert abs(time() - float(doc_versions[0]['timestamp_string'])) < 3.0
+        rv = self.APP.post('/documents/test', data='second version')
+        ts_page = self.get_json('/documents/test/'+doc_versions[0]['timestamp_string'])
+        assert ts_page == {'content': 'hello world'}
+        updated_page = self.get_json('/documents/test/latest')
+        assert updated_page == {'content': 'second version'}
         
     def test_invalid_title(self):
         rv = self.APP.get('/documents/&#47;&#46;&#46.hack/latest')
