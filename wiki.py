@@ -1,5 +1,6 @@
 from json import dumps
 from os.path import join
+from os import listdir
 from re import compile
 from flask import Flask, request, abort
 
@@ -9,7 +10,7 @@ document_name_regexp = compile("[A-Za-z0-9]{1,50}$")
 
 @app.route("/documents")
 def documents():
-    return dumps([])
+    return dumps(sorted([name for name in listdir(app.config['ROOT']) if document_name_regexp.match(name)]))
 
 @app.route("/documents/<name>", methods=['POST'])
 def post_page(name):
