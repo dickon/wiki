@@ -1,4 +1,4 @@
-from json import dumps
+from json import dumps, loads
 from os.path import join, isfile, isdir
 from os import listdir, makedirs
 from re import compile
@@ -37,12 +37,14 @@ def documents():
 def post_page(name):
     verify_root()
     verify_page_name(name)
+    doc = loads(request.data.decode())
+    # TODO: validate doc structure
     page_directory = join(APP.config['ROOT'], name)
     if not isdir(page_directory):
         makedirs(page_directory)
     page_filename = join(page_directory, str(time()))
-    with open(page_filename, 'wb') as f:
-        f.write(request.data)
+    with open(page_filename, 'w') as f:
+        f.write(doc['content'])
         return 'saved'
     
 @APP.route("/documents/<name>/<timestamp>", methods=['GET'])

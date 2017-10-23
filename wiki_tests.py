@@ -2,7 +2,7 @@ from unittest import TestCase, main
 from wiki import APP
 from os import close, unlink
 from tempfile import mkdtemp
-from json import loads
+from json import loads, dumps
 from shutil import rmtree
 from time import time
 
@@ -22,21 +22,23 @@ class WikiTestCase(TestCase):
         empty_list = self.get_json('/documents')
         assert empty_list == []
 
-    def test_single_page(self):        
-        rv = self.APP.post('/documents/test', data='hello world')
+    def test_single_page(self):
+        first_version = 'hello world'
+        second_version = 'Hello, world!'
+        rv = self.APP.post('/documents/test', data=dumps({'content':first_version}))
         assert rv.status_code == 200
         wanted_page = self.get_json('/documents/test/latest')
-        assert wanted_page == {'content': 'hello world'}
+        assert wanted_page == {'content': first_version}
         one_doc = self.get_json('/documents')
         assert one_doc == ['test']
         doc_versions = self.get_json('/documents/test')
         assert len(doc_versions) == 1
         assert abs(time() - float(doc_versions[0]['timestamp_string'])) < 3.0
-        rv = self.APP.post('/documents/test', data='second version')
+        rv = self.APP.post('/documents/test', data=dumps({'content':second_version}))
         ts_page = self.get_json('/documents/test/'+doc_versions[0]['timestamp_string'])
-        assert ts_page == {'content': 'hello world'}
+        assert ts_page == {'content': first_version}
         updated_page = self.get_json('/documents/test/latest')
-        assert updated_page == {'content': 'second version'}
+        assert updated_page == {'content': second_version}
         
     def test_invalid_title(self):
         rv = self.APP.get('/documents/&#47;&#46;&#46.hack/latest')
