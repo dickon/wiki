@@ -19,12 +19,18 @@ def get_version_directories(name):
 def verify_page_name(name):
     if not DOCUMENT_NAME_REGEXP.match(name):
         abort(400) # if we wanted to require python 3.4 we could use http.HTTPStatus
-    
+
+def verify_root():
+    if 'ROOT' not in APP.config:
+        abort(500)
+    if not isdir(APP.config['ROOT']):
+        abort(500)
 
 # entry points
 
 @APP.route("/documents")
 def documents():
+    verify_root()
     return dumps(sorted([name for name in listdir(APP.config['ROOT']) if DOCUMENT_NAME_REGEXP.match(name)]))
 
 @APP.route("/documents/<name>", methods=['POST'])
