@@ -28,9 +28,12 @@ class WikiTestCase(TestCase):
         assert wanted_page == {'content': 'hello world'}
 
     def test_invalid_title(self):
-        rv = self.app.get('/documents/&#47;&#46;&#46.hack')
-        # TODO: should we be returning 401 Unatuhroized or 403 Forbidden here? least disclosure suggests 400 bad request
-        assert rv.status_code == 400
+        rv = self.app.get('/documents/&#47;&#46;&#46.hack/latest')
+        assert rv.status_code == 400 # never actually gets to our code, the routing retursns 405/Method not allowed
+        rv2 = self.app.get('/documents/waywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaytoolong/latest')
+        assert rv2.status_code == 400
         
+
+
 if __name__ == '__main__':
     main()
