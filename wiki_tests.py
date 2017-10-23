@@ -1,6 +1,5 @@
 from unittest import TestCase, main
 from wiki import app
-from tempfile import mkstemp
 from os import close, unlink
 from json import loads
 
