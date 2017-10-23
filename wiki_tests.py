@@ -2,6 +2,7 @@ from unittest import TestCase, main
 from wiki import app
 from tempfile import mkstemp
 from os import close, unlink
+from json import loads
 
 class WikiTestCase(TestCase):
     def setUp(self):
@@ -10,9 +11,10 @@ class WikiTestCase(TestCase):
             
     def test_empty(self):
         rv = self.app.get('/documents')
-        print(rv.data)
         assert rv.data == b"[]"
-        pass
+        out = loads(rv.data.decode())
+        assert out == []
+        
     
 if __name__ == '__main__':
     main()
