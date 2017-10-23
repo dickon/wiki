@@ -15,7 +15,7 @@ def documents():
 @APP.route("/documents/<name>", methods=['POST'])
 def post_page(name):
     if not DOCUMENT_NAME_REGEXP.match(name):
-        abort(400)
+        abort(400) # if we wanted to require python 3.4 we could use http.HTTPStatus
     with open(join(APP.config['ROOT'], name), 'wb') as f:
         f.write(request.data)
         return 'saved'
