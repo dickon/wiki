@@ -68,7 +68,10 @@ def documents():
 
 @APP.route("/documents/<title>", methods=['POST'])
 def post_page(title):
-    """Post a new page.
+    """Post a new page, obtained from the flask request data.
+
+    The request data should be of the form:
+       { "content": "Hello world" }
 
     Args:
       title(str): name of the page
