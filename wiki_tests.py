@@ -13,7 +13,10 @@ class WikiTestCase(TestCase):
         assert rv.data == b"[]"
         out = loads(rv.data.decode())
         assert out == []
-        
-    
+
+    def test_single_page(self):
+        rv = self.app.post('/documents/test', 'hello world')
+        assert rv.status_code == 200
+
 if __name__ == '__main__':
     main()
