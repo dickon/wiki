@@ -26,7 +26,9 @@ class WikiTestCase(TestCase):
         assert rv.status_code == 200
         wanted_page = self.get_json('/documents/test/latest')
         assert wanted_page == {'content': 'hello world'}
-
+        one_doc = self.get_json('/documents')
+        assert one_doc == ['test']
+        
     def test_invalid_title(self):
         rv = self.app.get('/documents/&#47;&#46;&#46.hack/latest')
         assert rv.status_code == 400 # never actually gets to our code, the routing retursns 405/Method not allowed
