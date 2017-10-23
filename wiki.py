@@ -35,6 +35,7 @@ def documents():
 
 @APP.route("/documents/<name>", methods=['POST'])
 def post_page(name):
+    verify_root()
     verify_page_name(name)
     page_directory = join(APP.config['ROOT'], name)
     if not isdir(page_directory):
@@ -43,10 +44,10 @@ def post_page(name):
     with open(page_filename, 'wb') as f:
         f.write(request.data)
         return 'saved'
-
     
-@APP.route("/documents/<name>/latest", methods=['GET'])
+@APP.route("/documents/<name>", methods=['GET'])
 def get_latest_page(name):
+    verify_root()
     verify_page_name(name)
     versions = get_version_directories(name)
     if versions == []:
@@ -56,6 +57,7 @@ def get_latest_page(name):
 
 @APP.route("/documents/<name>", methods=['GET'])
 def get_page_versions(name):
+    verify_root()
     verify_page_name(name)
     versions = get_version_directories(name)
     return dumps([{'timestamp_string':x} for x in versions])
