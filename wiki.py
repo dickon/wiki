@@ -27,6 +27,7 @@ def get_version_directories(title):
                   floating point numeric order
     """
     page_directory = join(APP.config['ROOT'], title)
+    # TODO: cope with page_directory being missing"""
     unsorted = [x for x in listdir(page_directory) if
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
@@ -56,13 +57,15 @@ def documents():
     """Return a list of available titles.
 
     Returns:
-      str: JSON encoded list of titles, each of which is of the form {"title": "pagename"}
+      str: JSON encoded list of titles, each of which is of the form
+           {"title": "pagename"}
            Sample output with one page called test:
 
               [{"title": "test"}]
     """
     verify_root()
-    return dumps(sorted([{"title":title} for title in listdir(APP.config['ROOT']) if
+    files = listdir(APP.config['ROOT'])
+    return dumps(sorted([{"title":title} for title in files if
                          DOCUMENT_TITLE_REGEXP.match(title)]))
 
 @APP.route("/documents/<title>", methods=['POST'])
@@ -76,7 +79,10 @@ def post_page(title):
       title(str): name of the page
 
     Returns:
-      str: status indicated message, e.g. "saved"
+      str: status indicating message, e.g. "saved"
+
+    Can also fail with HTTP code 400 if title is illegal,
+    or 500 if server directory root is not configured or write failed.
     """
     verify_root()
     verify_page_title(title)
@@ -90,12 +96,26 @@ def post_page(title):
     if not isdir(page_directory):
         makedirs(page_directory)
     page_filetitle = join(page_directory, str(time()))
+    # TODO: catch file errors
     with open(page_filetitle, 'w') as fileobj:
         fileobj.write(doc['content'])
         return "saved"
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
 def get_specific_page(title, timestamp):
+    """Return the content of a specific page at a given timestamp:
+
+    Args:
+      title(str): the page title
+      timestamp: either a numeric timestamp or the string "latest"
+
+    Returns:
+      str: JSON encoded object with key "content" and value being the page value
+
+    Can also fail with HTTP code 404 for timestamp or page not found,
+    or 500 if this app has not been configured with a page.
+    """
+
     verify_root()
     verify_page_title(title)
     versions = get_version_directories(title)
@@ -112,6 +132,15 @@ def get_specific_page(title, timestamp):
 
 @APP.route("/documents/<title>", methods=['GET'])
 def get_page_versions(title):
+    """Return all the timestamps for a page.
+
+    Args:
+      title(str): the page title
+
+    Returns:
+      str: JSON encoded list of objects with timestamp_string fields, such as:
+      [{"timestamp_version":"123.4", "timestamp_version": "456"}]
+    """
     verify_root()
     verify_page_title(title)
     versions = get_version_directories(title)
