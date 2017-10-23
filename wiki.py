@@ -15,7 +15,6 @@ def documents():
 def post_page(name):
     if not document_name_regexp.match(name):
         abort(400)
-    # TODO: validate name
     with open(join(app.config['ROOT'], name), 'wb') as f:
         f.write(request.data)
         return 'saved'
@@ -24,7 +23,6 @@ def post_page(name):
 def get_latest_page(name):
     if not document_name_regexp.match(name):
         abort(400)
-    # TODO: validate name
     with open(join(app.config['ROOT'], name), 'r') as f:
         return dumps({'content':f.read()})
 
