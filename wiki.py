@@ -56,7 +56,7 @@ def documents():
       str: JSON encoded list of titles
     """
     verify_root()
-    return dumps(sorted([title for title in listdir(APP.config['ROOT']) if
+    return dumps(sorted([{"title":title} for title in listdir(APP.config['ROOT']) if
                          DOCUMENT_TITLE_REGEXP.match(title)]))
 
 @APP.route("/documents/<title>", methods=['POST'])

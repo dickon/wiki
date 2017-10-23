@@ -30,7 +30,7 @@ class WikiTestCase(TestCase):
         wanted_page = self.get_json('/documents/test/latest')
         assert wanted_page == {'content': first_version}
         one_doc = self.get_json('/documents')
-        assert one_doc == ['test']
+        assert one_doc == [{'title':'test'}]
         doc_versions = self.get_json('/documents/test')
         assert len(doc_versions) == 1
         assert abs(time() - float(doc_versions[0]['timestamp_string'])) < 3.0
