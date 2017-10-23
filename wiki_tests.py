@@ -28,6 +28,9 @@ class WikiTestCase(TestCase):
         assert wanted_page == {'content': 'hello world'}
         one_doc = self.get_json('/documents')
         assert one_doc == ['test']
+        doc_versions = self.get_json('/documents/test')
+        assert len(doc_versions) == 1
+        assert abs(time() - doc_versions[0]['timestamp']) < 3.0
         
     def test_invalid_title(self):
         rv = self.APP.get('/documents/&#47;&#46;&#46.hack/latest')
