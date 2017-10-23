@@ -7,3 +7,7 @@ app = Flask(__name__)
 def documents():
     return dumps([])
 
+@app.route("/documents/<name>", methods=['POST'])
+def page(name):
+    return dumps({'content':''})
+

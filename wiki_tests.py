@@ -15,7 +15,7 @@ class WikiTestCase(TestCase):
         assert out == []
 
     def test_single_page(self):
-        rv = self.app.post('/documents/test', 'hello world')
+        rv = self.app.post('/documents/test', data='hello world')
         assert rv.status_code == 200
 
 if __name__ == '__main__':
