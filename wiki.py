@@ -16,6 +16,11 @@ def get_version_directories(name):
     unsorted = [x for x in listdir(page_directory) if TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
 
+def verify_page_name(name):
+    if not DOCUMENT_NAME_REGEXP.match(name):
+        abort(400) # if we wanted to require python 3.4 we could use http.HTTPStatus
+    
+
 # entry points
 
 @APP.route("/documents")
@@ -24,8 +29,7 @@ def documents():
 
 @APP.route("/documents/<name>", methods=['POST'])
 def post_page(name):
-    if not DOCUMENT_NAME_REGEXP.match(name):
-        abort(400) # if we wanted to require python 3.4 we could use http.HTTPStatus
+    verify_page_name(name)
     page_directory = join(APP.config['ROOT'], name)
     if not isdir(page_directory):
         makedirs(page_directory)
@@ -37,8 +41,7 @@ def post_page(name):
     
 @APP.route("/documents/<name>/latest", methods=['GET'])
 def get_latest_page(name):
-    if not DOCUMENT_NAME_REGEXP.match(name):
-        abort(400)
+    verify_page_name(name)
     versions = get_version_directories(name)
     if versions == []:
         abort(404)
@@ -47,7 +50,6 @@ def get_latest_page(name):
 
 @APP.route("/documents/<name>", methods=['GET'])
 def get_page_versions(name):
-    if not DOCUMENT_NAME_REGEXP.match(name):
-        abort(400)
+    verify_page_name(name)
     versions = get_version_directories(name)
     return dumps([{'timestamp_string':x} for x in versions])
