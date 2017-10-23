@@ -9,6 +9,15 @@ APP = Flask(__name__)
 DOCUMENT_NAME_REGEXP = compile("[A-Za-z0-9]{1,50}$")
 TIMESTAMP_REGEXP = compile(r"\d+(\.\d+)?$")
 
+# library functions
+
+def get_version_directories(name):
+    page_directory = join(APP.config['ROOT'], name)
+    unsorted = [x for x in listdir(page_directory) if TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
+    return sorted(unsorted, key=float)
+
+# entry points
+
 @APP.route("/documents")
 def documents():
     return dumps(sorted([name for name in listdir(APP.config['ROOT']) if DOCUMENT_NAME_REGEXP.match(name)]))
@@ -25,10 +34,6 @@ def post_page(name):
         f.write(request.data)
         return 'saved'
 
-def get_version_directories(name):
-    page_directory = join(APP.config['ROOT'], name)
-    unsorted = [x for x in listdir(page_directory) if TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
-    return sorted(unsorted, key=float)
     
 @APP.route("/documents/<name>/latest", methods=['GET'])
 def get_latest_page(name):
