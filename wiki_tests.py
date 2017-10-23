@@ -46,6 +46,11 @@ class WikiTestCase(TestCase):
         rv2 = self.APP.get('/documents/waywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaywaytoolong/latest')
         assert rv2.status_code == 400
 
+    def test_malformed_json_page(self):
+        rv = self.APP.post('/documents/test', data="{'content':bad)")
+        assert rv.status_code == 400
+        assert 'invalid JSON' in rv.data
+        
 class WikiUnconfigured(TestCase):
     def test_unconfigured(self):
         app = APP.test_client()
