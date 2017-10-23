@@ -4,6 +4,7 @@ from os import close, unlink
 from tempfile import mkdtemp
 from json import loads
 from shutil import rmtree
+from time import time
 
 class WikiTestCase(TestCase):
     def setUp(self):
@@ -30,7 +31,7 @@ class WikiTestCase(TestCase):
         assert one_doc == ['test']
         doc_versions = self.get_json('/documents/test')
         assert len(doc_versions) == 1
-        assert abs(time() - doc_versions[0]['timestamp']) < 3.0
+        assert abs(time() - float(doc_versions[0]['timestamp_string'])) < 3.0
         
     def test_invalid_title(self):
         rv = self.APP.get('/documents/&#47;&#46;&#46.hack/latest')
