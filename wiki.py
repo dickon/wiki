@@ -4,27 +4,27 @@ from os import listdir
 from re import compile
 from flask import Flask, request, abort
 
-app = Flask(__name__)
-document_name_regexp = compile("[A-Za-z0-9]{1,50}$")
+APP = Flask(__name__)
+DOCUMENT_NAME_REGEXP = compile("[A-Za-z0-9]{1,50}$")
 
 
-@app.route("/documents")
+@APP.route("/documents")
 def documents():
-    return dumps(sorted([name for name in listdir(app.config['ROOT']) if document_name_regexp.match(name)]))
+    return dumps(sorted([name for name in listdir(APP.config['ROOT']) if DOCUMENT_NAME_REGEXP.match(name)]))
 
-@app.route("/documents/<name>", methods=['POST'])
+@APP.route("/documents/<name>", methods=['POST'])
 def post_page(name):
-    if not document_name_regexp.match(name):
+    if not DOCUMENT_NAME_REGEXP.match(name):
         abort(400)
-    with open(join(app.config['ROOT'], name), 'wb') as f:
+    with open(join(APP.config['ROOT'], name), 'wb') as f:
         f.write(request.data)
         return 'saved'
 
-@app.route("/documents/<name>/latest", methods=['GET'])
+@APP.route("/documents/<name>/latest", methods=['GET'])
 def get_latest_page(name):
-    if not document_name_regexp.match(name):
+    if not DOCUMENT_NAME_REGEXP.match(name):
         abort(400)
-    with open(join(app.config['ROOT'], name), 'r') as f:
+    with open(join(APP.config['ROOT'], name), 'r') as f:
         return dumps({'content':f.read()})
 
         
