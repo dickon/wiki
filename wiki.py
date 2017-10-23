@@ -37,7 +37,11 @@ def documents():
 def post_page(name):
     verify_root()
     verify_page_name(name)
-    doc = loads(request.data.decode())
+    try:
+        doc = loads(request.data.decode())
+    except ValueError:
+        abort(400) # TODO: include text telling the user that the JSON is invalid?
+        
     # TODO: validate doc structure
     page_directory = join(APP.config['ROOT'], name)
     if not isdir(page_directory):
