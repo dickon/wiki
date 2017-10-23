@@ -57,10 +57,9 @@ def documents():
 
     Returns:
       str: JSON encoded list of titles, each of which is of the form {"title": "pagename"}
+           Sample output with one page called test:
 
-    Sample output with one page called test:
-
-      [{"title": "test"}]
+              [{"title": "test"}]
     """
     verify_root()
     return dumps(sorted([{"title":title} for title in listdir(APP.config['ROOT']) if
