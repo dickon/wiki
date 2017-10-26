@@ -51,6 +51,10 @@ class WikiTestCase(TestCase):
     def test_malformed_json_page(self):
         rv = self.APP.post('/documents/test', data="{'content':bad)")
         assert rv.status_code == 400
+
+    def test_missing_page(self):
+        missing_page = self.get_json('/documents/test/latest')
+        assert missing_page.status_code == 404
         
 class WikiUnconfigured(TestCase):
     def test_unconfigured(self):
