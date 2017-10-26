@@ -65,8 +65,8 @@ def documents():
     """
     verify_root()
     files = listdir(APP.config['ROOT'])
-    return dumps(sorted([{"title":title} for title in files if
-                         DOCUMENT_TITLE_REGEXP.match(title)]))
+    return jsonify(sorted([{"title":title} for title in files if
+                           DOCUMENT_TITLE_REGEXP.match(title)]))
 
 @APP.route("/documents/<title>", methods=['POST'])
 def post_page(title):
@@ -131,7 +131,7 @@ def get_specific_page(title, timestamp):
             abort(404)
         version = timestamp
     with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
-        return dumps({'content':fileobj.read()})
+        return jsonify({'content':fileobj.read()})
 
 @APP.route("/documents/<title>", methods=['GET'])
 def get_page_versions(title):
