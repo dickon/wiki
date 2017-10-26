@@ -27,6 +27,7 @@ class WikiTestCase(TestCase):
         second_version = 'Hello, world!'
         rv = self.APP.post('/documents/test', data=dumps({'content':first_version}))
         assert rv.status_code == 200
+        assert rv.content_type.startswith('text/json')
         # TODO: check content type of rv is application/json
         wanted_page = self.get_json('/documents/test/latest')
         assert wanted_page == {'content': first_version}
