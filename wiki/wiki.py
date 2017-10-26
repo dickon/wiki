@@ -38,26 +38,19 @@ def get_version_directories(title):
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
 
-
-def check_root():
-    """Check that the site has been properly configured, and if not call flask's
-    abort, raising an exception."""
-    if 'ROOT' not in APP.config:
-        return "ROOT not set in config" # should be unreachable now we set a default ROOT
-    if not isdir(APP.config['ROOT']):
-        try:
-            makedirs(APP.config['ROOT'])
-        except OSError:
-            return "Unable to create server data directory"
-
-def checkenv(func):
+def check_and_json_encode(func):
     # we need functools.wraps to stack decorators, see
     #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
     @wraps(func)
     def decorated(*args, **kwargs):
-        bad = check_root()
-        if bad:
-            return Response(dumps({'problem':bad}), stauts=500, content_type='application/json')
+        if 'ROOT' not in APP.config:
+            return "ROOT not set in config" # should be unreachable now we set a default ROOT
+        if not isdir(APP.config['ROOT']):
+            try:
+                makedirs(APP.config['ROOT'])
+            except OSError:
+                resp = {'problem':'Unable to create server data directory'}
+                return Response(dumps(resp), stauts=500, content_type='application/json')
         if 'title' in kwargs:
             if not DOCUMENT_TITLE_REGEXP.match(kwargs['title']):
                 resp = {'problem': 'illegal document title - regexp mismatch',
@@ -69,7 +62,7 @@ def checkenv(func):
 # entry points
 
 @APP.route("/documents")
-@checkenv
+@check_and_json_encode
 def documents():
     """Return a list of available titles.
 
@@ -87,7 +80,7 @@ def documents():
                    DOCUMENT_TITLE_REGEXP.match(title)])
 
 @APP.route("/documents/<title>", methods=['POST'])
-@checkenv
+@check_and_json_encode
 def post_page(title):
     """Post a new page, obtained from the flask request data.
 
@@ -122,7 +115,7 @@ def post_page(title):
         return {'timestamp_string':timestamp}
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
-@checkenv
+@check_and_json_encode
 def get_specific_page(title, timestamp):
     """Return the content of a specific page at a given timestamp:
 
@@ -149,7 +142,7 @@ def get_specific_page(title, timestamp):
         return {'content':fileobj.read()}
 
 @APP.route("/documents/<title>", methods=['GET'])
-@checkenv
+@check_and_json_encode
 def get_page_versions(title):
     """Return all the timestamps for a page.
 
