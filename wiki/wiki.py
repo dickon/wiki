@@ -38,15 +38,6 @@ def get_version_directories(title):
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
 
-def verify_page_title(title):
-    """Check that title is valid, or abort (raising an exception)"
-
-    Args:
-      title (str): page title
-    """
-    if not DOCUMENT_TITLE_REGEXP.match(title):
-        # if we wanted to require python 3.4 we could use http.HTTPStatus
-        abort(400)
 
 def check_root():
     """Check that the site has been properly configured, and if not call flask's
@@ -59,11 +50,6 @@ def check_root():
         except OSError:
             return "Unable to create server data directory"
 
-def verify_root():
-    bad = check_root()
-    if bad:
-        abort(500)
-
 def checkenv(func):
     # we need functools.wraps to stack decorators, see
     #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
@@ -72,7 +58,11 @@ def checkenv(func):
         bad = check_root()
         if bad:
             return Response(dumps({'problem':bad}), stauts=500, content_type='application/json')
-
+        if 'title' in kwargs:
+            if not DOCUMENT_TITLE_REGEXP.match(kwargs['title']):
+                resp = {'problem': 'illegal document title - regexp mismatch',
+                        'regexp':DOCUMENT_TITLE_REGEXP.pattern}
+                return Response(dumps(resp), status=400, content_type='application/json')
         return jsonify(func(*args, **kwargs))
     return decorated
         
@@ -113,7 +103,6 @@ def post_page(title):
     Can also fail with HTTP code 400 if title is illegal,
     or 500 if server directory root is not configured or write failed.
     """
-    verify_page_title(title)
     try:
         # note that request here is thread local, see:
         #   http://flask.pocoo.org/docs/0.12/quickstart/#the-request-object
@@ -147,7 +136,6 @@ def get_specific_page(title, timestamp):
     Can also fail with HTTP code 404 for timestamp or page not found,
     or 500 if this app has not been configured with a page.
     """
-    verify_page_title(title)
     versions = get_version_directories(title)
     if timestamp == 'latest':
         if versions == []:
@@ -172,6 +160,5 @@ def get_page_versions(title):
       str: JSON encoded list of objects with timestamp_string fields, such as:
       [{"timestamp_version":"123.4", "timestamp_version": "456"}]
     """        
-    verify_page_title(title)
     versions = get_version_directories(title)
     return [{'timestamp_string':x} for x in versions]
