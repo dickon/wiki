@@ -56,15 +56,5 @@ class WikiTestCase(TestCase):
         missing_page = self.APP.get('/documents/test/latest')
         assert missing_page.status_code == 404
         
-class WikiUnconfigured(TestCase):
-    def test_unconfigured(self):
-        app = APP.test_client()
-        rv = app.get('/documents')
-        # depending on what order this runs it may be that ROOT got set up in the APP
-        # config by executions of WikiTestCase, in which case the tearDown should have
-        # deleted the data so that will cause the server to detect the missing data to 500
-        # Or, we run first and ROOT never got set which also should make the server return 500
-        assert rv.status_code == 500
-
 if __name__ == '__main__':
     main()

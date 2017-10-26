@@ -3,15 +3,16 @@
 Uses flask (http://flask.pocoo.org/)
 """
 
-from json import loads
-from os.path import join, isfile, isdir
+from json import loads, dumps
+from os.path import join, isfile, isdir, join
+from tempfile import gettempdir
 from os import listdir, makedirs
 from re import compile as regexp_compile
 from time import time
 from flask import Flask, request, abort, Response, jsonify
 
 APP = Flask(__name__)
-APP.config.update(dict(ROOT=APP.root_path+"/data"))
+APP.config.update(dict(ROOT=join(gettempdir(),"wikidata")))
 APP.config.from_envvar('WIKI_SETTINGS', silent=True)
 
 DOCUMENT_TITLE_REGEXP = regexp_compile("[A-Za-z0-9]{1,50}$")
@@ -46,14 +47,22 @@ def verify_page_title(title):
         # if we wanted to require python 3.4 we could use http.HTTPStatus
         abort(400)
 
-def verify_root():
+def check_root():
     """Check that the site has been properly configured, and if not call flask's
     abort, raising an exception."""
     if 'ROOT' not in APP.config:
-        abort(500)
+        return "ROOT not set in config" # should be unreachable now we set a default ROOT
     if not isdir(APP.config['ROOT']):
-        abort(500)
+        try:
+            makedirs(APP.config['ROOT'])
+        except OSError:
+            return "Unable to create server data directory"
 
+def verify_root():
+    bad = check_root()
+    if bad:
+        abort(500)
+        
 # entry points
 
 @APP.route("/documents")
@@ -67,6 +76,8 @@ def documents():
 
               [{"title": "test"}]
     """
+    if not isdir(APP.config['ROOT']):
+        return jsonify([])
     verify_root()
     files = listdir(APP.config['ROOT'])
     return jsonify(sorted([{"title":title} for title in files if
@@ -122,8 +133,9 @@ def get_specific_page(title, timestamp):
     Can also fail with HTTP code 404 for timestamp or page not found,
     or 500 if this app has not been configured with a page.
     """
-
-    verify_root()
+    bad = check_root()
+    if bad:
+        return Response(dumps({'problem':bad}), status=500, content_type='application/json')
     verify_page_title(title)
     versions = get_version_directories(title)
     if timestamp == 'latest':
@@ -148,7 +160,10 @@ def get_page_versions(title):
       str: JSON encoded list of objects with timestamp_string fields, such as:
       [{"timestamp_version":"123.4", "timestamp_version": "456"}]
     """
-    verify_root()
+    bad = check_root()
+    if bad:
+        return Response(dumps({'problem':bad}), stauts=500, content_type='application/json')
+        
     verify_page_title(title)
     versions = get_version_directories(title)
     return jsonify([{'timestamp_string':x} for x in versions])
