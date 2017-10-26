@@ -79,6 +79,7 @@ def checkenv(func):
 # entry points
 
 @APP.route("/documents")
+@checkenv
 def documents():
     """Return a list of available titles.
 
@@ -91,12 +92,12 @@ def documents():
     """
     if not isdir(APP.config['ROOT']):
         return jsonify([])
-    verify_root()
     files = listdir(APP.config['ROOT'])
-    return jsonify(sorted([{"title":title} for title in files if
-                           DOCUMENT_TITLE_REGEXP.match(title)]))
+    return sorted([{"title":title} for title in files if
+                   DOCUMENT_TITLE_REGEXP.match(title)])
 
 @APP.route("/documents/<title>", methods=['POST'])
+@checkenv
 def post_page(title):
     """Post a new page, obtained from the flask request data.
 
@@ -112,7 +113,6 @@ def post_page(title):
     Can also fail with HTTP code 400 if title is illegal,
     or 500 if server directory root is not configured or write failed.
     """
-    verify_root()
     verify_page_title(title)
     try:
         # note that request here is thread local, see:
@@ -130,7 +130,7 @@ def post_page(title):
     # TODO: catch file errors
     with open(page_filetitle, 'w') as fileobj:
         fileobj.write(doc['content'])
-        return jsonify({'timestamp_string':timestamp})
+        return {'timestamp_string':timestamp}
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
 @checkenv
