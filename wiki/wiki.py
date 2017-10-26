@@ -9,6 +9,7 @@ from tempfile import gettempdir
 from os import listdir, makedirs
 from re import compile as regexp_compile
 from time import time
+from functools import wraps
 from flask import Flask, request, abort, Response, jsonify
 
 APP = Flask(__name__)
@@ -62,6 +63,18 @@ def verify_root():
     bad = check_root()
     if bad:
         abort(500)
+
+def checkenv(func):
+    # we need functools.wraps to stack decorators, see
+    #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        bad = check_root()
+        if bad:
+            return Response(dumps({'problem':bad}), stauts=500, content_type='application/json')
+
+        return jsonify(func(*args, **kwargs))
+    return decorated
         
 # entry points
 
@@ -150,6 +163,7 @@ def get_specific_page(title, timestamp):
         return jsonify({'content':fileobj.read()})
 
 @APP.route("/documents/<title>", methods=['GET'])
+@checkenv
 def get_page_versions(title):
     """Return all the timestamps for a page.
 
@@ -159,11 +173,7 @@ def get_page_versions(title):
     Returns:
       str: JSON encoded list of objects with timestamp_string fields, such as:
       [{"timestamp_version":"123.4", "timestamp_version": "456"}]
-    """
-    bad = check_root()
-    if bad:
-        return Response(dumps({'problem':bad}), stauts=500, content_type='application/json')
-        
+    """        
     verify_page_title(title)
     versions = get_version_directories(title)
-    return jsonify([{'timestamp_string':x} for x in versions])
+    return [{'timestamp_string':x} for x in versions]
