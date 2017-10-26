@@ -3,7 +3,7 @@
 Uses flask (http://flask.pocoo.org/)
 """
 
-from json import dumps, loads
+from json import loads
 from os.path import join, isfile, isdir
 from os import listdir, makedirs
 from re import compile as regexp_compile
@@ -40,7 +40,7 @@ def verify_page_title(title):
       title (str): page title
     """
     if not DOCUMENT_TITLE_REGEXP.match(title):
-        # TODO: if we wanted to require python 3.4 we could use http.HTTPStatus
+        # if we wanted to require python 3.4 we could use http.HTTPStatus
         abort(400)
 
 def verify_root():
@@ -148,4 +148,4 @@ def get_page_versions(title):
     verify_root()
     verify_page_title(title)
     versions = get_version_directories(title)
-    return dumps([{'timestamp_string':x} for x in versions])
+    return jsonify([{'timestamp_string':x} for x in versions])
