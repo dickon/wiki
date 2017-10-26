@@ -27,7 +27,7 @@ def get_version_directories(title):
                   floating point numeric order
     """
     page_directory = join(APP.config['ROOT'], title)
-    # TODO: cope with page_directory being missing"""
+    # TODO: cope with page_directory being missing
     unsorted = [x for x in listdir(page_directory) if
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
@@ -87,6 +87,8 @@ def post_page(title):
     verify_root()
     verify_page_title(title)
     try:
+        # note that request here is thread local, see:
+        #   http://flask.pocoo.org/docs/0.12/quickstart/#the-request-object
         doc = loads(request.data.decode())
     except ValueError:
         abort(400) # TODO: specific error text saying JSON is invalid?
