@@ -133,6 +133,7 @@ def post_page(title):
         return jsonify({'timestamp_string':timestamp})
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
+@checkenv
 def get_specific_page(title, timestamp):
     """Return the content of a specific page at a given timestamp:
 
@@ -146,9 +147,6 @@ def get_specific_page(title, timestamp):
     Can also fail with HTTP code 404 for timestamp or page not found,
     or 500 if this app has not been configured with a page.
     """
-    bad = check_root()
-    if bad:
-        return Response(dumps({'problem':bad}), status=500, content_type='application/json')
     verify_page_title(title)
     versions = get_version_directories(title)
     if timestamp == 'latest':
@@ -160,7 +158,7 @@ def get_specific_page(title, timestamp):
             abort(404)
         version = timestamp
     with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
-        return jsonify({'content':fileobj.read()})
+        return {'content':fileobj.read()}
 
 @APP.route("/documents/<title>", methods=['GET'])
 @checkenv
