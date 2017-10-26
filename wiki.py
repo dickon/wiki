@@ -8,7 +8,7 @@ from os.path import join, isfile, isdir
 from os import listdir, makedirs
 from re import compile as regexp_compile
 from time import time
-from flask import Flask, request, abort
+from flask import Flask, request, abort, Response
 
 APP = Flask(__name__)
 DOCUMENT_TITLE_REGEXP = regexp_compile("[A-Za-z0-9]{1,50}$")
@@ -97,11 +97,12 @@ def post_page(title):
     page_directory = join(APP.config['ROOT'], title)
     if not isdir(page_directory):
         makedirs(page_directory)
-    page_filetitle = join(page_directory, str(time()))
+    timestamp = str(time())
+    page_filetitle = join(page_directory, timestamp)
     # TODO: catch file errors
     with open(page_filetitle, 'w') as fileobj:
         fileobj.write(doc['content'])
-        return "saved"
+        return Response(dumps({'timestamp_string':timestamp}), status=200, mimetype="application/json")
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
 def get_specific_page(title, timestamp):
