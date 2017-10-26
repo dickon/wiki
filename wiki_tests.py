@@ -53,7 +53,7 @@ class WikiTestCase(TestCase):
         assert rv.status_code == 400
 
     def test_missing_page(self):
-        missing_page = self.get_json('/documents/test/latest')
+        missing_page = self.APP.get('/documents/test/latest')
         assert missing_page.status_code == 404
         
 class WikiUnconfigured(TestCase):
