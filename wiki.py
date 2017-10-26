@@ -29,7 +29,6 @@ def get_version_directories(title):
     page_directory = join(APP.config['ROOT'], title)
     if not isdir(page_directory):
         abort(404)
-    # TODO: cope with page_directory being missing
     unsorted = [x for x in listdir(page_directory) if
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
