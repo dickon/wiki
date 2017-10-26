@@ -11,6 +11,9 @@ from time import time
 from flask import Flask, request, abort, Response, jsonify
 
 APP = Flask(__name__)
+APP.config.update(dict(ROOT=APP.root_path+"/data"))
+APP.config.from_envvar('WIKI_SETTINGS', silent=True)
+
 DOCUMENT_TITLE_REGEXP = regexp_compile("[A-Za-z0-9]{1,50}$")
 TIMESTAMP_REGEXP = regexp_compile(r"\d+(\.\d+)?$")
 
