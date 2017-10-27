@@ -125,7 +125,8 @@ def post_page(title):
         # note that request here is thread local, see:
         #   http://flask.pocoo.org/docs/0.12/quickstart/#the-request-object
         doc = loads(request.data.decode())
-    except ValueError:
+    except ValueError as exc:
+        APP.logger.error('JSON parse error '+str(exc))
         return error('unable to parse JSON', 400)
     try:
         content = str(doc['content'])
