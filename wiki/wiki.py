@@ -13,7 +13,7 @@ from functools import wraps
 from flask import Flask, request, abort, Response, jsonify
 
 APP = Flask(__name__)
-APP.config.update(dict(ROOT=join(gettempdir(),"wikidata")))
+APP.config.update(dict(ROOT=join(gettempdir(), "wikidata")))
 APP.config.from_envvar('WIKI_SETTINGS', silent=True)
 
 DOCUMENT_TITLE_REGEXP = regexp_compile("[A-Za-z0-9]{1,50}$")
@@ -52,14 +52,25 @@ def error(description, code=500, **keywords):
     resp = dict(problem=description, **keywords)
     return Response(dumps(resp), status=code, content_type='application/json')
 
-    
 def check_and_json_encode(func):
+    """Function decorator which checks configuration and, if specified,
+    document titles. Then it calls the function and converts the result to JSON,
+    unless it is already a finalised Flask response instance
+
+    Args:
+       func (function): the function to decorate
+
+    Returns:
+       A decorated function
+    """
     # we need functools.wraps to stack decorators, see
     #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
     @wraps(func)
     def decorated(*args, **kwargs):
+        """Sub-function to return"""
         if 'ROOT' not in APP.config:
-            return "ROOT not set in config" # should be unreachable now we set a default ROOT
+            # should be unreachable since we set a default ROOT above
+            return "ROOT not set in config"
         if not isdir(APP.config['ROOT']):
             try:
                 makedirs(APP.config['ROOT'])
@@ -72,7 +83,7 @@ def check_and_json_encode(func):
         res = func(*args, **kwargs)
         return res if isinstance(res, Response) else jsonify(res)
     return decorated
-        
+
 # entry points
 
 @APP.route("/documents")
@@ -115,9 +126,11 @@ def post_page(title):
         #   http://flask.pocoo.org/docs/0.12/quickstart/#the-request-object
         doc = loads(request.data.decode())
     except ValueError:
-        abort(400) # TODO: specific error text saying JSON is invalid?
-
-    # TODO: validate doc structure
+        return error('unable to parse JSON', 400)
+    try:
+        content = str(doc['content'])
+    except (TypeError, KeyError):
+        return error('unable to extract content from JSON')
     page_directory = join(APP.config['ROOT'], title)
     if not isdir(page_directory):
         makedirs(page_directory)
@@ -126,14 +139,14 @@ def post_page(title):
 
     try:
         with open(filename+'.t', 'w') as fileobj:
-            fileobj.write(doc['content'])
+            fileobj.write(content)
     except IOError:
         return error('unable to write page')
     try:
         rename(filename+'.t', filename)
     except OSError:
         return error('unable to rename filne in to place; try again')
-    
+
     return {'timestamp_string':timestamp}
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
@@ -163,7 +176,7 @@ def get_specific_page(title, timestamp):
     try:
         with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
             return {'content':fileobj.read()}
-    except IOError(exc):
+    except IOError as exc:
         APP.logger.error(exc)
         return error('unable to read page content', 503)
 
@@ -178,6 +191,6 @@ def get_page_versions(title):
     Returns:
       str: JSON encoded list of objects with timestamp_string fields, such as:
       [{"timestamp_version":"123.4", "timestamp_version": "456"}]
-    """        
+    """
     versions = get_version_directories(title)
     return [{'timestamp_string':x} for x in versions]
