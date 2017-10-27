@@ -69,7 +69,8 @@ def check_and_json_encode(func):
             if not DOCUMENT_TITLE_REGEXP.match(kwargs['title']):
                 return error('illegal document title - regexp mismatch', 400,
                              regexp=DOCUMENT_TITLE_REGEXP.pattern)
-        return jsonify(func(*args, **kwargs))
+        res = func(*args, **kwargs)
+        return res if isinstance(res, Response) else jsonify(res)
     return decorated
         
 # entry points
