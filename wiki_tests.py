@@ -54,7 +54,7 @@ class WikiTestCase(TestCase):
         assert res2.status_code == 200
         ts_page = self.get_json('/documents/test/'+
                                 doc_versions[0]['timestamp_string'])
-        assert ts_page == {'content': first_version}
+        assert ts_page['content'] == first_version
         updated_page = self.get_json('/documents/test/latest')
         assert updated_page == {'content': second_version}
 
