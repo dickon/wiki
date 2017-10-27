@@ -1,0 +1,4 @@
+venv*/*
+*.pyc
+wiki.egg-info/*
+*~
