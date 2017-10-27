@@ -6,7 +6,7 @@ Uses flask (http://flask.pocoo.org/)
 from json import loads, dumps
 from os.path import join, isfile, isdir, join
 from tempfile import gettempdir
-from os import listdir, makedirs
+from os import listdir, makedirs, rename
 from re import compile as regexp_compile
 from time import time
 from functools import wraps
@@ -121,11 +121,19 @@ def post_page(title):
     if not isdir(page_directory):
         makedirs(page_directory)
     timestamp = str(time())
-    page_filetitle = join(page_directory, timestamp)
-    # TODO: catch file errors
-    with open(page_filetitle, 'w') as fileobj:
-        fileobj.write(doc['content'])
-        return {'timestamp_string':timestamp}
+    filename = join(page_directory, timestamp)
+
+    try:
+        with open(filename+'.t', 'w') as fileobj:
+            fileobj.write(doc['content'])
+    except IOError:
+        return error('unable to write page')
+    try:
+        rename(filename+'.t', filename)
+    except OSError:
+        return error('unable to rename filne in to place; try again')
+    
+    return {'timestamp_string':timestamp}
 
 @APP.route("/documents/<title>/<timestamp>", methods=['GET'])
 @check_and_json_encode
