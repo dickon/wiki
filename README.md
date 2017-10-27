@@ -2,6 +2,9 @@
 
 My first Flask application :)
 
+Main code is in wiki/wiki.py.
+Unit test suite is wiki_tests.py.
+
 Developed against Python 3.4.2 with Flask 0.12.2 on Debian 8.
 Also tested using Python 2.7.9 on Debian, and Python 3.4.3 on Windows 10 64 bit.
 
