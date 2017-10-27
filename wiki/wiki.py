@@ -38,6 +38,21 @@ def get_version_directories(title):
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
 
+def error(description, code=500, **keywords):
+    """Produce a response:
+
+    Args:
+       code (int): HTTP response code
+       description (str): problem description text
+       other arguments are added to the JSON response dictionary.
+
+    Returns:
+       Response: a Flask Response instance
+    """
+    resp = dict(problem=description, **keywords)
+    return Response(dumps(resp), status=code, content_type='application/json')
+
+    
 def check_and_json_encode(func):
     # we need functools.wraps to stack decorators, see
     #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
@@ -49,13 +64,11 @@ def check_and_json_encode(func):
             try:
                 makedirs(APP.config['ROOT'])
             except OSError:
-                resp = {'problem':'Unable to create server data directory'}
-                return Response(dumps(resp), stauts=500, content_type='application/json')
+                return error('Unable to create server data directory')
         if 'title' in kwargs:
             if not DOCUMENT_TITLE_REGEXP.match(kwargs['title']):
-                resp = {'problem': 'illegal document title - regexp mismatch',
-                        'regexp':DOCUMENT_TITLE_REGEXP.pattern}
-                return Response(dumps(resp), status=400, content_type='application/json')
+                return error('illegal document title - regexp mismatch', 400,
+                             regexp=DOCUMENT_TITLE_REGEXP.pattern)
         return jsonify(func(*args, **kwargs))
     return decorated
         
