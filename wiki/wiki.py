@@ -151,8 +151,12 @@ def get_specific_page(title, timestamp):
         if timestamp not in versions:
             abort(404)
         version = timestamp
-    with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
-        return {'content':fileobj.read()}
+    try:
+        with open(join(APP.config['ROOT'], title, version), 'r') as fileobj:
+            return {'content':fileobj.read()}
+    except IOError(exc):
+        APP.logger.error(exc)
+        return error('unable to read page content', 503)
 
 @APP.route("/documents/<title>", methods=['GET'])
 @check_and_json_encode
