@@ -1,4 +1,4 @@
-"""A simple Wiki API using JSON; see ./wiki_tests.py for test cases.
+"""A simple Wiki API using JSON; see ../wiki_tests.py for test cases.
 
 Uses flask (http://flask.pocoo.org/)
 """
@@ -34,6 +34,7 @@ def get_version_directories(title):
     page_directory = join(APP.config['ROOT'], title)
     if not isdir(page_directory):
         abort(404)
+    # the listdir or isfile can fail, which flask will turn into a 500 HTTP error
     unsorted = [x for x in listdir(page_directory) if
                 TIMESTAMP_REGEXP.match(x) and isfile(join(page_directory, x))]
     return sorted(unsorted, key=float)
@@ -53,15 +54,16 @@ def error(description, code=500, **keywords):
     return Response(dumps(resp), status=code, content_type='application/json')
 
 def check_and_json_encode(func):
-    """Function decorator which checks configuration and, if specified,
-    document titles. Then it calls the function and converts the result to JSON,
-    unless it is already a finalised Flask response instance
+    """Function decorator which checks server data root configuration and, 
+    if specified, document titles match the regexp. Then it calls the function 
+    and converts the result to JSON, unless it is already a finalised Flask 
+    response instance.
 
     Args:
        func (function): the function to decorate
 
     Returns:
-       A decorated function
+       A decorated function suitable for Flash route decorators.
     """
     # we need functools.wraps to stack decorators, see
     #  http://flask.pocoo.org/docs/0.12/patterns/viewdecorators/
@@ -77,6 +79,8 @@ def check_and_json_encode(func):
             except OSError:
                 return error('Unable to create server data directory')
         if 'title' in kwargs:
+            # we are assuming title is a string, which we know since that's
+            # what flask always supplies by default
             if not DOCUMENT_TITLE_REGEXP.match(kwargs['title']):
                 return error('illegal document title - regexp mismatch', 400,
                              regexp=DOCUMENT_TITLE_REGEXP.pattern)
@@ -86,10 +90,12 @@ def check_and_json_encode(func):
 
 # entry points
 
+# technically we don't need to supply methods=['GET'] but being explicit
+# here draws attention to the function that uses POST later
 @APP.route("/documents")
 @check_and_json_encode
-def documents():
-    """Return a list of available titles.
+def list_documents(methods=['GET']):
+    """Get a list of available document titles.
 
     Returns:
       str: JSON encoded list of titles, each of which is of the form
@@ -99,7 +105,7 @@ def documents():
               [{"title": "test"}]
     """
     if not isdir(APP.config['ROOT']):
-        return jsonify([])
+        return []
     files = listdir(APP.config['ROOT'])
     return sorted([{"title":title} for title in files if
                    DOCUMENT_TITLE_REGEXP.match(title)])
